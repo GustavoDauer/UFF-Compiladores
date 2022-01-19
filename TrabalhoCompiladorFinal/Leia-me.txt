@@ -1,0 +1,9 @@
+Trabalho da Disciplina de Compiladores de 2016.1
+
+Alunos :
+    GUSTAVO DAUER
+    IGOR GALVAO
+    MAYKOM CAMPOS
+    VINICIUS BRUM
+
+Professor: Luis Antonio Kowada
