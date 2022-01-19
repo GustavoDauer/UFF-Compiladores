@@ -1,0 +1,447 @@
+package modelo;
+
+import java_cup.runtime.*;
+import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+
+parser code {:
+    public String arvore;
+
+    public String getArvore() {
+        return arvore;
+    }
+    
+    public void report_error(String message, Object info) {
+        StringBuilder m = new StringBuilder("Erro");
+        m.append(" : ").append(message);
+        System.err.println(m);
+    }
+   
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        System.exit(1);
+    }
+
+    public void syntax_error(Symbol s){ 
+        System.err.println("Erro de sintaxe no token "+s.value); 
+    }
+
+    /*public static  void main(String[] args){
+        try {
+            Reader leitor = new InputStreamReader(new FileInputStream(args[0]));               
+            parser = new MiniJavaParser(new MiniJavaLexer(leitor));
+            //MiniJavaParser parser = new MiniJavaParser(new MiniJavaLexer(new FileReader(args[0])));
+            Object result = parser.parse().value;
+            System.out.println("*** Resultados finais ***");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }*/
+:};
+
+
+terminal Token AND,ELSE,IF,OR,TIMES,PLUS,MINUS,DIVIDE,SEMI,LEFT_PAREN,VOID,
+RT_PAREN,EQ,GTR,LESS,LESS_EQ,GTR_EQ,NOT_EQ,ASSMNT,IDENT,PTO,ACH,FCH,ACO,FCO,NEG,VIR,CLA,PUB,
+STA,VOI,MAI,STR,EXT,BOO,RET,INT,WHI,SOP,LEN,TRU,FAL,THI,NUL,NEW;
+
+non terminal Node prog,main,classe,var,metodo,params,tipo,cmd,exp,rexp,aexp,mexp,
+sexp,pexp,exps,classlist,varlist,metodolist,cmdlist,paramslist,paramsmetodo,pexpempty,pexpline,rexpline,aexpline,mexpline,expline;
+
+start with prog;
+
+/*Produções*/
+
+prog ::= main:m classlist:classlist
+        {: 
+            m.addChildren(classlist);
+            RESULT = m;
+            this.arvore = "";            
+        :};
+
+classlist ::= classe:classe classlist:classlist
+        {:             
+            classlist.addChildren(classe);
+            RESULT = classlist;   
+        :}
+        |/*vazio*/
+        ;
+
+main ::= CLA:clas IDENT:id1 ACH:ach1 PUB:publi STA:stati VOI:voi MAI:mai LEFT_PAREN:apa 
+STR:str ACO:aco FCO:fco IDENT:id2 RT_PAREN:fpa ACH:ach2 cmd:cmd FCH:fch1 FCH:fch2
+        {:
+            Node node = new Node(clas);            
+            node.addChildren(id1);
+            node.addChildren(ach1);
+            node.addChildren(publi);
+            node.addChildren(stati);
+            node.addChildren(voi);
+            node.addChildren(mai);
+            node.addChildren(apa);
+            node.addChildren(str);
+            node.addChildren(aco);
+            node.addChildren(fco);
+            node.addChildren(id2);
+            node.addChildren(fpa);
+            node.addChildren(ach2);
+            node.addChildren(cmd);
+            node.addChildren(fch1);
+            node.addChildren(fch2);
+            RESULT = node;
+            System.out.println("Adicionando..." + node);
+            this.arvore += node;
+            System.out.println("Imprimindo..." + this.arvore);
+        :};
+
+classe ::= CLA:clas IDENT:id1 ACH:ach varlist:varlist metodolist:metodolist FCH:fch
+        {:
+            Node node = new Node(clas);
+            node.addChildren(id1);
+            node.addChildren(ach);
+            node.addChildren(varlist);
+            node.addChildren(metodolist);
+            node.addChildren(fch);
+            RESULT = node;
+            System.out.println("Adicionando..." + node);
+            this.arvore += node;
+            System.out.println("Imprimindo..." + this.arvore);
+        :}
+        |CLA:clas IDENT:id2 EXT:ext IDENT:id ACH:ach varlist:varlist metodolist:metodolist FCH:fch
+        {:
+            Node node = new Node(clas);
+            node.addChildren(id2);
+            node.addChildren(id);
+            node.addChildren(varlist);
+            node.addChildren(metodolist);
+            RESULT = node;
+            System.out.println("Adicionando..." + node);
+            this.arvore += node;
+            System.out.println("Imprimindo..." + this.arvore);
+        :};
+
+
+varlist ::= varlist:varlist var:var 
+        {:             
+            //varlist.addChildren(var);
+            RESULT = varlist;   
+        :}
+            |/*vazio*/;
+
+var ::= tipo:tipo IDENT:id SEMI:semi
+        {:            
+            //tipo.addChildren(tipo);
+            //tipo.addChildren(id);
+        :};
+
+metodolist ::= metodo:metodo metodolist:metodolist
+        {:             
+            metodolist.addChildren(metodo);
+            RESULT = metodolist;   
+        :}
+        |/*vazio*/ ;
+
+metodo ::= PUB:pub tipo:tipo IDENT:id1 paramsmetodo:paramsmetodo ACH:ach
+varlist:varlist cmd:cmd RET:ret exp:exp SEMI:semi FCH:fch
+         {:
+            Node node = new Node(id1);
+            node.addChildren(pub);
+            node.addChildren(tipo);
+            node.addChildren(id1);
+            node.addChildren(paramsmetodo);
+            node.addChildren(ach);
+            node.addChildren(varlist);
+            node.addChildren(cmd);
+            node.addChildren(ret);
+            //node.addChildren(exp);
+            node.addChildren(semi);
+            node.addChildren(fch);
+            RESULT = node;
+        :};        
+
+cmdlist ::= cmd:cmd cmdlist:cmdlist
+        {:              
+            cmdlist.addChildren(cmd);
+            RESULT = cmdlist;   
+        :}
+        |/*vazio*/
+        ;
+
+paramslist ::= params:params paramslist:paramslist
+        {:              
+            paramslist.addChildren(params);
+            RESULT = paramslist;   
+        :}
+        |params:params
+        {:              
+            RESULT = params;   
+        :}
+        ;
+
+paramsmetodo ::= LEFT_PAREN:apa RT_PAREN:fpa
+        |LEFT_PAREN:apa paramslist:paramslist RT_PAREN:fpa
+        {:              
+            RESULT = paramslist;   
+        :}
+        ;
+
+params ::= tipo:tipo IDENT:id
+        {:    
+            tipo.addChildren(id);
+            RESULT = tipo;   
+        :};
+
+tipo ::= INT:i ACO:aco FCH:fch
+        {:              
+            RESULT = new Node(i);   
+        :}
+        |BOO:boo   
+        {:              
+            RESULT = new Node(boo);   
+        :}
+        |INT:i
+        {:              
+            RESULT = new Node(i);   
+        :}
+        |IDENT:id
+        {:              
+            RESULT = new Node(id);   
+        :}
+        ;        
+
+cmd ::= ACH:ach cmdlist:cmdlist FCH:fch
+        {:            
+            RESULT = cmdlist;
+        :}    
+        |IF:ifs LEFT_PAREN:apa exp:exp RT_PAREN:fpa cmd:cmd1 ELSE:els cmd:cmd2
+        {:
+            Node node = new Node(ifs);
+            //node.addChildren(exp);
+            node.addChildren(cmd1);
+            node.addChildren(els);
+            node.addChildren(cmd2);
+            RESULT = node;
+        :}    
+        |WHI:whi LEFT_PAREN:apa exp:exp RT_PAREN:fpa cmd:cmd
+        {:
+            Node node = new Node(whi);
+            //node.addChildren(exp);
+            node.addChildren(cmd);
+            RESULT = node;
+        :}  
+        |SOP:sop LEFT_PAREN:apa exp:exp RT_PAREN:fpa SEMI:semi
+        {:
+            Node node = new Node(sop);   
+            node.addChildren(apa);       
+            //node.addChildren(exp);
+            node.addChildren(fpa);  
+            RESULT = node;
+        :}  
+        |IDENT:id ASSMNT:assmnt exp:exp SEMI:semi  
+        {:
+            Node node = new Node(id);
+            node.addChildren(assmnt);
+            //node.addChildren(exp);
+            RESULT = node;
+        :}
+        |IDENT:id ACO:aco exp:exp FCO:fco ASSMNT:assmnt exp:exp2 SEMI:semi        
+        {:
+            Node node = new Node(id);
+            //node.addChildren(exp);
+            node.addChildren(assmnt);
+            //node.addChildren(exp2);
+            RESULT = node;
+        :}
+        ;
+
+exp ::= rexp:rexp expline:expline
+        {:
+            //rexp.addChildren(expline);
+            RESULT = rexp;
+        :} 
+        ;
+expline ::= AND:an rexp:rexp expline:expline
+        {:
+            //expline.addChildren(an);
+            //expline.addChildren(rexp);
+            RESULT = expline;
+        :} 
+        |/*vazio*/
+        ;
+    
+rexp ::= aexp:aexp rexpline:rexpline
+        {:
+            //aexp.addChildren(rexpline);            
+            RESULT = aexp;
+        :} 
+        ;
+
+rexpline ::= LESS:less aexp:aexp rexpline:rexpline
+        {:
+            //rexpline.addChildren(less);
+            //rexpline.addChildren(aexp);
+            RESULT = rexpline;
+        :}
+            |EQ:eq aexp:aexp rexpline:rexpline
+        {:
+            //rexpline.addChildren(eq);
+            //rexpline.addChildren(aexp);
+            RESULT = rexpline;
+        :}
+            |NOT_EQ:neq aexp:aexp rexpline:rexpline
+        {:
+            //rexpline.addChildren(neq);
+            //rexpline.addChildren(aexp);
+            RESULT = rexpline;
+        :}
+            |/*vazio*/
+            ;
+
+aexp ::= mexp:mexp aexpline:aexpline
+        {:
+            //mexp.addChildren(aexpline);                        
+            RESULT = mexp;
+        :}
+        ;
+aexpline ::=  PLUS:plus mexp:mexp aexpline:aexpline
+        {:
+            //aexpline.addChildren(plus);
+            //aexpline.addChildren(mexp);
+            RESULT = aexpline;
+        :}
+            |MINUS:minus mexp:mexp aexpline:aexpline
+        {:
+            //aexpline.addChildren(minus);
+            //1aexpline.addChildren(mexp);
+            RESULT = aexpline;
+        :}
+            |/*vazio*/
+            ;
+    
+mexp ::= sexp:sexp mexpline:mexpline
+        {:
+            //sexp.addChildren(mexpline);                        
+            RESULT = sexp;
+        :}
+        ;
+mexpline ::= TIMES:times sexp:sexp mexpline:mexpline
+        {:
+            //mexpline.addChildren(times);
+            //mexpline.addChildren(sexp);
+            RESULT = mexpline;
+        :}
+            |DIVIDE:divides sexp:sexp mexpline:mexpline
+        {:
+            //mexpline.addChildren(divides);
+            //mexpline.addChildren(sexp);
+            RESULT = mexpline;
+        :}
+            |/*vazio*/
+            ;
+
+sexp ::= NEG:neg sexp:sexp 
+        {:
+            //sexp.addChildren(neg);
+            RESULT = sexp;
+        :}
+        |MINUS:minus sexp:sexp
+        {:
+            //sexp.addChildren(minus);
+            RESULT = sexp;
+        :}
+        |TRU:tru
+        {:
+            //sexp.addChildren(tru);            
+        :}
+        |FAL:fal
+        {:
+            //sexp.addChildren(fal);            
+        :}
+        |INT:i
+        {:
+            //sexp.addChildren(i);            
+        :}
+        |NUL:nul
+        {:
+            //sexp.addChildren(nul);            
+        :}
+        |NEW:ne INT:i ACO:aco exp:exp FCO:fco
+        {:
+            //sexp.addChildren(ne);            
+            //sexp.addChildren(i);  
+            //sexp.addChildren(exp);  
+        :}
+        |pexp:pexp PTO:pto LEN:len
+        {:
+            //pexp.addChildren(pto);            
+            //pexp.addChildren(len);  
+            RESULT = pexp;  
+        :}
+        |pexp:pexp ACO:aco exp:exp FCO:fco
+        {:          
+            //pexp.addChildren(exp);  
+            RESULT = pexp;  
+        :}
+        |pexp:pexp
+        {:                      
+            RESULT = pexp;  
+        :}
+        ;
+
+pexp ::= IDENT:id pexpline:pexpline
+        {:        
+            //pexpline.addChildren(id);  
+            RESULT = pexpline;  
+        :}
+        |THI:thi pexpline:pexpline
+        {:        
+            //pexpline.addChildren(thi);  
+            RESULT = pexpline;  
+        :}
+        |NEW:ne IDENT:id LEFT_PAREN:apa RT_PAREN:fpa pexpline:pexpline
+        {:   
+            //pexpline.addChildren(ne);  
+            //pexpline.addChildren(id);   
+            RESULT = pexpline;  
+        :}
+        |LEFT_PAREN:apa exp:exp RT_PAREN:fpa pexpline:pexpline
+        {:               
+            //pexpline.addChildren(exp);   
+            RESULT = pexpline;  
+        :}
+        ;
+
+pexpline ::= PTO:pto IDENT:id pexpempty:pexpempty pexpline:pexpline
+        {:   
+            //pexpline.addChildren(pto); 
+            //pexpline.addChildren(id); 
+            //pexpline.addChildren(pexpempty);     
+            RESULT = pexpline;  
+        :}
+        |VOID
+        ;
+
+
+pexpempty ::= LEFT_PAREN:apa RT_PAREN:fpa
+        {:        
+            //RESULT = pexpempty;  
+        :}
+        |LEFT_PAREN:apa exps:exps RT_PAREN:fpa 
+        {:   
+            //pexpempty.addChildren(exps);  
+            //RESULT = pexpempty;  
+        :}
+        |/*vazio*/
+        ;
+
+exps ::= exp:exp
+        {:   
+            RESULT = exp;  
+        :}
+        |exp:exp VIR:vir exps:exps
+        {:   
+            //exps.addChildren(exp);  
+            //exps.addChildren(vir);  
+            RESULT = exps;  
+        :}
+        ;
